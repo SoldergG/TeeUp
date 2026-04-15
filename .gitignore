@@ -1,0 +1,27 @@
+# Xcode
+*.xcodeproj/
+xcuserdata/
+*.xcworkspace/
+build/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+
+# SPM
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# CocoaPods (not used but just in case)
+Pods/
+
+# Secrets (never commit)
+*.plist.secret
+GoogleService-Info.plist
