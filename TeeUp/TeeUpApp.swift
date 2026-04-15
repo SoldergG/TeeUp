@@ -6,6 +6,12 @@ struct TeeUpApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    // Handle OAuth callback (Google Sign In via Supabase)
+                    Task {
+                        try? await SupabaseManager.shared.client.auth.session(from: url)
+                    }
+                }
         }
         .modelContainer(for: [
             Course.self,

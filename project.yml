@@ -18,7 +18,7 @@ settings:
     INFOPLIST_KEY_UILaunchScreen_Generation: true
     INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
     INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
-    INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "TeeUp precisa da sua localização para mostrar campos perto de si."
+    INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "TeeUp precisa da tua localização para mostrar campos de golfe perto de ti."
 
 targets:
   TeeUp:
@@ -26,15 +26,29 @@ targets:
     platform: iOS
     sources:
       - TeeUp
+    entitlements:
+      path: TeeUp/TeeUp.entitlements
     dependencies:
       - package: Supabase
         product: Supabase
+    info:
+      path: TeeUp/Info.plist
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: com.teeup.app
+            CFBundleURLSchemes:
+              - teeup
+        CFBundleDisplayName: TeeUp
+        UILaunchScreen:
+          UIColorName: ""
+          UIImageName: ""
     settings:
       base:
-        GENERATE_INFOPLIST_FILE: true
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: TeeUp/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.teeup.app
-        INFOPLIST_KEY_CFBundleDisplayName: "TeeUp"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: TeeUp/TeeUp.entitlements
