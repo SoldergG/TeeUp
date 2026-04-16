@@ -66,7 +66,7 @@ final class CachedCourseSearch {
 @Observable
 final class GooglePlacesService {
     // ⚠️ Replace with your Google Places API key
-    private let apiKey = "YOUR_GOOGLE_PLACES_API_KEY"
+    private let apiKey = "AIzaSyDxzqcOHjeb-ch9_oa8hxTPssNSdWzLwj8"
     private let baseURL = "https://places.googleapis.com/v1/places:searchNearby"
 
     var courses: [GolfCourse] = []
