@@ -20,7 +20,8 @@ struct TeeUpApp: App {
             Round.self,
             HoleScore.self,
             UserProfile.self,
-            HandicapRecord.self
+            HandicapRecord.self,
+            CachedCourseSearch.self
         ])
     }
 }

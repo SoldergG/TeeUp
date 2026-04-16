@@ -1,6 +1,5 @@
 import Foundation
 import Supabase
-import Auth
 
 @Observable
 final class SupabaseManager {
@@ -14,7 +13,13 @@ final class SupabaseManager {
     private init() {
         client = SupabaseClient(
             supabaseURL: URL(string: "https://bolsrjupsxzglrjbdezr.supabase.co")!,
-            supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbHNyanVwc3h6Z2xyamJkZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODkyMDMsImV4cCI6MjA5MTc2NTIwM30.2K0XOEUIFYl25wX00YYj4F_62bc5ZgvXwYRRtxl8Q_I"
+            supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbHNyanVwc3h6Z2xyamJkZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODkyMDMsImV4cCI6MjA5MTc2NTIwM30.2K0XOEUIFYl25wX00YYj4F_62bc5ZgvXwYRRtxl8Q_I",
+            options: .init(
+                auth: .init(
+                    flowType: .pkce,
+                    emitLocalSessionAsInitialSession: true
+                )
+            )
         )
     }
 

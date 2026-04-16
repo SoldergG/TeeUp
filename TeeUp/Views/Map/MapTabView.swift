@@ -2,28 +2,29 @@ import SwiftUI
 import MapKit
 
 struct MapTabView: View {
-    @Bindable var overpassService: OverpassService
+    @Bindable var placesService: GooglePlacesService
     @Bindable var locationManager: LocationManager
     @State private var cameraPosition: MapCameraPosition = .automatic
-    @State private var selectedCourse: OverpassCourse?
+    @State private var selectedCourse: GolfCourse?
     @State private var showDetail = false
     @State private var showRadiusSheet = false
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
+            ZStack {
+                // Map
                 Map(position: $cameraPosition) {
                     UserAnnotation()
-
-                    ForEach(overpassService.courses) { course in
-                        Annotation(course.name,
-                                   coordinate: course.coordinate,
-                                   anchor: .bottom
-                        ) {
-                            Button {
-                                selectedCourse = course
-                            } label: {
-                                coursePin
+                    ForEach(placesService.courses) { course in
+                        Annotation("", coordinate: course.coordinate, anchor: .bottom) {
+                            CoursePinView(
+                                isSelected: selectedCourse?.id == course.id,
+                                rating: course.rating
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(duration: 0.3)) {
+                                    selectedCourse = course
+                                }
                             }
                         }
                     }
@@ -34,112 +35,147 @@ struct MapTabView: View {
                     MapCompass()
                     MapScaleView()
                 }
+                .ignoresSafeArea(edges: .top)
 
-                // Top controls
-                HStack {
-                    Button {
-                        showRadiusSheet = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "circle.dashed")
-                            Text("\(Int(overpassService.searchRadiusKm)) km")
-                                .font(.caption.bold())
+                // Top pill buttons
+                VStack {
+                    HStack(spacing: 10) {
+                        // Radius pill
+                        MapPillButton(
+                            icon: "circle.dashed",
+                            label: "\(Int(placesService.searchRadiusKm)) km"
+                        ) { showRadiusSheet = true }
+
+                        Spacer()
+
+                        // Refresh / loading
+                        if placesService.isLoading {
+                            MapPillButton(icon: "arrow.clockwise", label: "A carregar...") {}
+                                .disabled(true)
+                        } else {
+                            MapPillButton(icon: "arrow.clockwise", label: "Atualizar") {
+                                refresh()
+                            }
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
                     }
-                    .tint(.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
                     Spacer()
 
-                    if overpassService.isLoading {
-                        ProgressView()
-                            .padding(10)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    } else {
-                        Button {
-                            refreshCourses()
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
+                    // Course card
+                    if let course = selectedCourse {
+                        MapCourseCard(course: course) {
+                            showDetail = true
+                        } onDismiss: {
+                            withAnimation { selectedCourse = nil }
                         }
-                        .tint(.primary)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-
-                // Course card at bottom
-                if let course = selectedCourse {
-                    VStack {
-                        Spacer()
-                        courseCard(course)
-                            .padding()
-                            .transition(.move(edge: .bottom))
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
             }
             .navigationTitle("Mapa")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                if let loc = locationManager.userLocation {
-                    cameraPosition = .region(MKCoordinateRegion(
-                        center: loc.coordinate,
-                        span: MKCoordinateSpan(
-                            latitudeDelta: overpassService.searchRadiusKm / 55.0,
-                            longitudeDelta: overpassService.searchRadiusKm / 55.0
-                        )
-                    ))
-                } else {
-                    cameraPosition = .region(MKCoordinateRegion(
-                        center: CLLocationCoordinate2D(latitude: 39.5, longitude: -8.0),
-                        span: MKCoordinateSpan(latitudeDelta: 6, longitudeDelta: 6)
-                    ))
-                }
-            }
+            .onAppear { centerOnUser() }
             .sheet(isPresented: $showDetail) {
                 if let course = selectedCourse {
-                    NavigationStack {
-                        OverpassCourseDetailView(course: course)
-                    }
+                    NavigationStack { GolfCourseDetailView(course: course) }
                 }
             }
             .sheet(isPresented: $showRadiusSheet) {
-                RadiusPickerSheet(
-                    radius: $overpassService.searchRadiusKm,
-                    onConfirm: { refreshCourses() }
-                )
-                .presentationDetents([.height(280)])
+                RadiusPickerSheet(radius: $placesService.searchRadiusKm) { refresh() }
+                    .presentationDetents([.height(280)])
             }
         }
     }
 
-    private var coursePin: some View {
-        VStack(spacing: 0) {
-            Image(systemName: "flag.fill")
-                .font(.caption)
-                .foregroundStyle(.white)
-                .padding(6)
-                .background(AppTheme.primaryGreen)
-                .clipShape(Circle())
-
-            Image(systemName: "triangle.fill")
-                .font(.system(size: 6))
-                .foregroundStyle(AppTheme.primaryGreen)
-                .rotationEffect(.degrees(180))
-                .offset(y: -2)
+    private func centerOnUser() {
+        if let loc = locationManager.userLocation {
+            cameraPosition = .region(MKCoordinateRegion(
+                center: loc.coordinate,
+                span: MKCoordinateSpan(
+                    latitudeDelta: placesService.searchRadiusKm / 55.0,
+                    longitudeDelta: placesService.searchRadiusKm / 55.0
+                )
+            ))
+        } else {
+            cameraPosition = .region(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 39.5, longitude: -8.0),
+                span: MKCoordinateSpan(latitudeDelta: 6, longitudeDelta: 6)
+            ))
         }
     }
 
-    private func courseCard(_ course: OverpassCourse) -> some View {
+    private func refresh() {
+        guard let loc = locationManager.userLocation else {
+            locationManager.requestPermission(); return
+        }
+        Task { await placesService.fetchCourses(near: loc.coordinate) }
+    }
+}
+
+// MARK: - Course Pin
+struct CoursePinView: View {
+    let isSelected: Bool
+    let rating: Double
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Circle()
+                    .fill(isSelected ? AppTheme.accentGold : AppTheme.primaryGreen)
+                    .frame(width: isSelected ? 40 : 32, height: isSelected ? 40 : 32)
+                    .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+
+                Image(systemName: "flag.fill")
+                    .font(isSelected ? .body : .caption)
+                    .foregroundStyle(.white)
+            }
+            // Pointer
+            Image(systemName: "triangle.fill")
+                .font(.system(size: isSelected ? 9 : 7))
+                .foregroundStyle(isSelected ? AppTheme.accentGold : AppTheme.primaryGreen)
+                .rotationEffect(.degrees(180))
+                .offset(y: -3)
+        }
+        .animation(.spring(duration: 0.25), value: isSelected)
+    }
+}
+
+// MARK: - Map Pill Button
+struct MapPillButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.caption.bold())
+                Text(label).font(.caption.bold())
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Map Course Card
+struct MapCourseCard: View {
+    let course: GolfCourse
+    let onSeeDetails: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(AppTheme.primaryGreen.opacity(0.15))
                     .frame(width: 50, height: 50)
                 Image(systemName: "flag.2.crossed.fill")
@@ -147,48 +183,44 @@ struct MapTabView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(course.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                HStack(spacing: 6) {
+                Text(course.name).font(.headline).lineLimit(1)
+                HStack(spacing: 8) {
                     Text(course.distanceFormatted)
-                    if let holes = course.holes {
-                        Text("· \(holes)H")
+                    if course.rating > 0 {
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill").foregroundStyle(AppTheme.accentGold)
+                            Text(course.ratingDisplay)
+                        }
                     }
-                    if course.feeDisplay != "N/D" {
-                        Text("· \(course.feeDisplay)")
+                    if let open = course.openNow {
+                        Text(open ? "Aberto" : "Fechado")
+                            .foregroundStyle(open ? .green : .red)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.caption).foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Button {
-                showDetail = true
-            } label: {
-                Text("Ver")
-                    .font(.subheadline.bold())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(AppTheme.primaryGreen)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
+            VStack(spacing: 8) {
+                Button(action: onSeeDetails) {
+                    Text("Ver")
+                        .font(.subheadline.bold())
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .background(AppTheme.primaryGreen).foregroundStyle(.white)
+                        .clipShape(Capsule())
+                }
+
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding()
+        .padding(14)
         .background(.ultraThickMaterial)
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-    }
-
-    private func refreshCourses() {
-        guard let loc = locationManager.userLocation else {
-            locationManager.requestLocation()
-            return
-        }
-        Task {
-            await overpassService.fetchCourses(near: loc.coordinate)
-        }
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
     }
 }
