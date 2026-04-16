@@ -2,23 +2,43 @@ import SwiftUI
 
 struct FriendsView: View {
     @Bindable var service: FriendsService
+    @Bindable var gameService: GameSessionService
+    @Bindable var placesService: GooglePlacesService
     @State private var searchText = ""
-    @State private var isSearching = false
     @State private var selectedTab = 0
     @State private var errorAlert: String?
 
     var body: some View {
         NavigationStack {
-            Group {
-                if !service.isAuthenticated {
-                    notLoggedInView
+            VStack(spacing: 0) {
+                // Tab picker
+                Picker("", selection: $selectedTab) {
+                    Text("Amigos").tag(0)
+                    Text("Partidas").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                if selectedTab == 0 {
+                    Group {
+                        if !service.isAuthenticated {
+                            notLoggedInView
+                        } else {
+                            mainContent
+                        }
+                    }
                 } else {
-                    mainContent
+                    GameSessionsView(
+                        gameService: gameService,
+                        friendsService: service,
+                        placesService: placesService
+                    )
                 }
             }
-            .navigationTitle("Amigos")
+            .navigationTitle(selectedTab == 0 ? "Amigos" : "Partidas")
             .toolbar {
-                if service.isAuthenticated {
+                if selectedTab == 0 && service.isAuthenticated {
                     ToolbarItem(placement: .topBarTrailing) {
                         if service.isLoading {
                             ProgressView().scaleEffect(0.8)

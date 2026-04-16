@@ -192,6 +192,10 @@ struct MapCourseCard: View {
                             Text(course.ratingDisplay)
                         }
                     }
+                    if let price = course.priceLevel {
+                        Text(String(repeating: "€", count: price + 1))
+                            .foregroundStyle(AppTheme.accentGold)
+                    }
                     if let open = course.openNow {
                         Text(open ? "Aberto" : "Fechado")
                             .foregroundStyle(open ? .green : .red)

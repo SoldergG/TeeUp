@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var placesService = GooglePlacesService()
     @State private var locationManager = LocationManager()
     @State private var friendsService = FriendsService()
+    @State private var gameService = GameSessionService()
     @State private var isLoggedIn = false
     @State private var hasCheckedAuth = false
     @State private var showPermissionsOnboarding = false
@@ -72,7 +73,7 @@ struct ContentView: View {
                 .tabItem { Label("Mapa", systemImage: "mappin.and.ellipse") }
                 .tag(2)
 
-            FriendsView(service: friendsService)
+            FriendsView(service: friendsService, gameService: gameService, placesService: placesService)
                 .tabItem { Label("Amigos", systemImage: "person.2.fill") }
                 .tag(3)
 
