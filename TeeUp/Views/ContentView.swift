@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var roundsVM = RoundsViewModel()
     @State private var placesService = GooglePlacesService()
     @State private var locationManager = LocationManager()
+    @State private var friendsService = FriendsService()
     @State private var isLoggedIn = false
     @State private var hasCheckedAuth = false
     @State private var showPermissionsOnboarding = false
@@ -59,7 +60,7 @@ struct ContentView: View {
     // MARK: - Main Tab View
     private var mainTabView: some View {
         TabView(selection: $selectedTab) {
-            RoundsView(viewModel: roundsVM)
+            RoundsView(viewModel: roundsVM, placesService: placesService)
                 .tabItem { Label("Rondas", systemImage: "flag.fill") }
                 .tag(0)
 
@@ -71,7 +72,7 @@ struct ContentView: View {
                 .tabItem { Label("Mapa", systemImage: "mappin.and.ellipse") }
                 .tag(2)
 
-            FriendsView()
+            FriendsView(service: friendsService)
                 .tabItem { Label("Amigos", systemImage: "person.2.fill") }
                 .tag(3)
 

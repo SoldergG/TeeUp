@@ -34,6 +34,15 @@ struct ProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .task {
+                // Sync from Supabase
+                if SupabaseManager.shared.isAuthenticated, let remote = try? await SupabaseManager.shared.fetchProfile(), let profile = profile {
+                    if let n = remote.name, !n.isEmpty { profile.name = n }
+                    if let u = remote.username, !u.isEmpty { profile.username = u }
+                    if let h = remote.handicapIndex { profile.handicapIndex = h }
+                    try? modelContext.save()
+                }
+            }
         }
     }
 
@@ -172,6 +181,8 @@ struct SettingsView: View {
 
     @State private var name = ""
     @State private var username = ""
+    @State private var isSaving = false
+    @State private var showSignOutAlert = false
 
     private var profile: UserProfile? { profiles.first }
 
@@ -180,7 +191,9 @@ struct SettingsView: View {
             Form {
                 Section("Perfil") {
                     TextField("Nome", text: $name)
-                    TextField("Username", text: $username)
+                    TextField("Username (@...)", text: $username)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
                 }
 
                 Section("Unidades") {
@@ -196,12 +209,6 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Dados") {
-                    Button("Exportar Rondas (CSV)") {
-                        // TODO: CSV export
-                    }
-                }
-
                 Section("Subscrição") {
                     HStack {
                         Text("Plano Atual")
@@ -211,18 +218,19 @@ struct SettingsView: View {
                     }
                     if profile?.isPro != true {
                         Button {
-                            // TODO: Show paywall
+                            // TODO: Paywall
                         } label: {
                             HStack {
-                                Image(systemName: "crown.fill")
-                                    .foregroundStyle(AppTheme.accentGold)
-                                Text("Atualizar para Pro")
-                                    .foregroundStyle(AppTheme.primaryGreen)
+                                Image(systemName: "crown.fill").foregroundStyle(AppTheme.accentGold)
+                                Text("Atualizar para Pro").foregroundStyle(AppTheme.primaryGreen)
                             }
                         }
                     }
-                    Button("Restaurar Compras") {
-                        // TODO: Restore purchases
+                }
+
+                Section("Conta") {
+                    Button("Terminar Sessão", role: .destructive) {
+                        showSignOutAlert = true
                     }
                 }
 
@@ -230,8 +238,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Versão")
                         Spacer()
-                        Text("1.0.0")
-                            .foregroundStyle(.secondary)
+                        Text("1.0.0").foregroundStyle(.secondary)
                     }
                 }
             }
@@ -239,12 +246,16 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        profile?.name = name
-                        profile?.username = username
-                        try? modelContext.save()
-                        dismiss()
+                    Button {
+                        saveProfile()
+                    } label: {
+                        if isSaving {
+                            ProgressView().scaleEffect(0.8)
+                        } else {
+                            Text("Guardar")
+                        }
                     }
+                    .disabled(isSaving)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
@@ -254,6 +265,36 @@ struct SettingsView: View {
                 name = profile?.name ?? ""
                 username = profile?.username ?? ""
             }
+            .alert("Terminar Sessão", isPresented: $showSignOutAlert) {
+                Button("Cancelar", role: .cancel) {}
+                Button("Terminar", role: .destructive) {
+                    Task {
+                        try? await SupabaseManager.shared.signOut()
+                        UserDefaults.standard.removeObject(forKey: "hasSkippedLogin")
+                        dismiss()
+                    }
+                }
+            } message: {
+                Text("Tens a certeza que queres terminar sessão?")
+            }
+        }
+    }
+
+    private func saveProfile() {
+        isSaving = true
+        // Save locally
+        profile?.name = name
+        profile?.username = username
+        try? modelContext.save()
+
+        // Sync to Supabase
+        Task {
+            if SupabaseManager.shared.isAuthenticated {
+                let data = ProfileData(name: name, username: username)
+                try? await SupabaseManager.shared.updateProfile(data)
+            }
+            isSaving = false
+            dismiss()
         }
     }
 }

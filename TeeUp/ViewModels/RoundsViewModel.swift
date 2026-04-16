@@ -85,6 +85,38 @@ class RoundsViewModel {
         try? modelContext?.save()
     }
 
+    // Standard 18-hole par 72 template
+    private static let standardLayout: [(par: Int, si: Int)] = [
+        (4,1),(4,9),(3,13),(4,5),(5,3),(4,11),(3,17),(4,7),(5,15),
+        (4,2),(4,10),(3,14),(4,6),(5,4),(4,12),(3,18),(4,8),(5,16)
+    ]
+
+    func createRoundFromGolfCourse(_ golfCourse: GolfCourse, holes: Int = 18, courseRating: Double = 72.0, slopeRating: Int = 113) -> Round {
+        let round = Round(
+            courseId: golfCourse.id,
+            courseName: golfCourse.name,
+            teeId: "default",
+            teeName: "Tees Brancos",
+            courseRating: courseRating,
+            slopeRating: slopeRating
+        )
+
+        let layout = Array(Self.standardLayout.prefix(holes))
+        for (index, hole) in layout.enumerated() {
+            let score = HoleScore(
+                holeNumber: index + 1,
+                par: hole.par,
+                strokeIndex: hole.si,
+                grossScore: hole.par
+            )
+            round.holeScores.append(score)
+        }
+
+        modelContext?.insert(round)
+        try? modelContext?.save()
+        return round
+    }
+
     func createRound(course: Course, tee: Tee) -> Round {
         let round = Round(
             courseId: course.id,

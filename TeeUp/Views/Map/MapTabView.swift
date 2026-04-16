@@ -39,14 +39,12 @@ struct MapTabView: View {
 
                 // Top pill buttons
                 VStack {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         // Radius pill
                         MapPillButton(
                             icon: "circle.dashed",
                             label: "\(Int(placesService.searchRadiusKm)) km"
                         ) { showRadiusSheet = true }
-
-                        Spacer()
 
                         // Refresh / loading
                         if placesService.isLoading {
@@ -57,6 +55,8 @@ struct MapTabView: View {
                                 refresh()
                             }
                         }
+
+                        Spacer()
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 8)

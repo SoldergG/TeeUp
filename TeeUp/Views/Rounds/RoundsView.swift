@@ -4,6 +4,7 @@ import Charts
 
 struct RoundsView: View {
     @Bindable var viewModel: RoundsViewModel
+    @Bindable var placesService: GooglePlacesService
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserProfile.name) private var profiles: [UserProfile]
     @State private var showStartRound = false
@@ -29,7 +30,7 @@ struct RoundsView: View {
             .background(AppTheme.secondaryBackground)
             .navigationTitle("Rondas")
             .sheet(isPresented: $showStartRound) {
-                StartRoundView(viewModel: viewModel)
+                StartRoundView(viewModel: viewModel, placesService: placesService)
             }
             .onAppear {
                 viewModel.modelContext = modelContext
