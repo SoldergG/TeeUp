@@ -3,9 +3,15 @@ import SwiftData
 
 @main
 struct TeeUpApp: App {
+    init() {
+        // Performance: deferred background setup
+        StartupOptimizer.performDeferredSetup()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .withOfflineBanner()
                 .onOpenURL { url in
                     // Handle OAuth callback (Google Sign In via Supabase)
                     Task {

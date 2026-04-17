@@ -14,6 +14,9 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        manager.distanceFilter = 100 // Performance: only update on 100m+ movement
+        manager.pausesLocationUpdatesAutomatically = true
+        manager.activityType = .other
         authorizationStatus = manager.authorizationStatus
     }
 

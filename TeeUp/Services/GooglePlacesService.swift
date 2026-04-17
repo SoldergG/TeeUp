@@ -75,8 +75,17 @@ final class GooglePlacesService {
     var searchRadiusKm: Double = 50
     var modelContext: ModelContext?
 
-    // MARK: - Fetch with cache
+    // Performance: deduplicate in-flight requests
+    private var currentFetchTask: Task<Void, Never>?
+    // Performance: reuse JSON coders
+    private static let encoder = JSONEncoder()
+    private static let decoder = JSONDecoder()
+
+    // MARK: - Fetch with cache + deduplication
     func fetchCourses(near coordinate: CLLocationCoordinate2D, radiusKm: Double? = nil) async {
+        // Performance: cancel previous in-flight request
+        currentFetchTask?.cancel()
+
         let radius = radiusKm ?? searchRadiusKm
         let cacheKey = cacheId(lat: coordinate.latitude, lon: coordinate.longitude, radius: radius)
 
@@ -86,20 +95,25 @@ final class GooglePlacesService {
             return
         }
 
-        // 2. Fetch from API
+        // 2. Fetch from API (deduplicated)
         isLoading = true
         errorMessage = nil
 
-        do {
-            let fetched = try await searchGolfCourses(near: coordinate, radiusMeters: Int(radius * 1000))
-            let enriched = enrichWithDistance(fetched, from: coordinate)
-            courses = enriched
-            saveToCache(courses: fetched, key: cacheKey, coordinate: coordinate, radius: radius)
-        } catch {
-            errorMessage = "Erro ao carregar campos: \(error.localizedDescription)"
+        let task = Task {
+            do {
+                let fetched = try await searchGolfCourses(near: coordinate, radiusMeters: Int(radius * 1000))
+                guard !Task.isCancelled else { return }
+                let enriched = enrichWithDistance(fetched, from: coordinate)
+                courses = enriched
+                saveToCache(courses: fetched, key: cacheKey, coordinate: coordinate, radius: radius)
+            } catch {
+                guard !Task.isCancelled else { return }
+                errorMessage = "Erro ao carregar campos: \(error.localizedDescription)"
+            }
+            isLoading = false
         }
-
-        isLoading = false
+        currentFetchTask = task
+        await task.value
     }
 
     // MARK: - Google Places API call
@@ -131,7 +145,7 @@ final class GooglePlacesService {
             forHTTPHeaderField: "X-Goog-FieldMask"
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.golf.data(for: request)
 
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             if let body = String(data: data, encoding: .utf8) {
@@ -140,7 +154,7 @@ final class GooglePlacesService {
             throw PlacesError.httpError
         }
 
-        let result = try JSONDecoder().decode(PlacesResponse.self, from: data)
+        let result = try Self.decoder.decode(PlacesResponse.self, from: data)
         return result.places?.map { GolfCourse(from: $0) } ?? []
     }
 
@@ -158,12 +172,12 @@ final class GooglePlacesService {
         guard let cached = try? context.fetch(descriptor).first,
               !cached.isExpired else { return nil }
 
-        return try? JSONDecoder().decode([GolfCourse].self, from: cached.coursesData)
+        return try? Self.decoder.decode([GolfCourse].self, from: cached.coursesData)
     }
 
     private func saveToCache(courses: [GolfCourse], key: String, coordinate: CLLocationCoordinate2D, radius: Double) {
         guard let context = modelContext,
-              let data = try? JSONEncoder().encode(courses) else { return }
+              let data = try? Self.encoder.encode(courses) else { return }
 
         // Remove old cache for same key
         let descriptor = FetchDescriptor<CachedCourseSearch>(
