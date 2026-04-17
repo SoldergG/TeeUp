@@ -244,3 +244,12 @@ Then:
 **Built with SwiftUI** · Made in Portugal
 
 </div>
+
+
+---
+
+<div align="center">
+
+**Built by [Lucas Solderg](https://soldergg.github.io)** · iOS & Mobile Developer from Portugal
+
+</div>
