@@ -1,162 +1,246 @@
-# TeeUp — Golf Companion App for Portugal
+<div align="center">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Platform-iOS%2017+-green?style=flat-square&logo=apple" />
-  <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift" />
-  <img src="https://img.shields.io/badge/SwiftUI-5-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?style=flat-square&logo=supabase" />
-</p>
+# <img src="https://img.icons8.com/color/48/golf.png" width="32" /> TeeUp
 
-**TeeUp** is a premium iOS golf companion app designed for the Portuguese market. Track rounds hole-by-hole, discover nearby golf courses, calculate your WHS handicap, and compete with friends — all in one beautifully crafted SwiftUI app.
+### Your Golf Companion — Made for Portugal
+
+[![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?style=for-the-badge&logo=apple&logoColor=white)](https://developer.apple.com/ios/)
+[![Swift 5.9](https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org/)
+[![SwiftUI](https://img.shields.io/badge/SwiftUI-5-007AFF?style=for-the-badge&logo=swift&logoColor=white)](https://developer.apple.com/swiftui/)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+
+**Track rounds. Discover courses. Compete with friends.**
+
+*72 Swift files · 100% SwiftUI · Offline-first · WHS compliant*
 
 ---
 
-## Features
+</div>
+
+## What is TeeUp?
+
+TeeUp is a premium iOS golf companion app built for Portuguese golfers. It combines real-time score tracking, course discovery via Google Places, World Handicap System calculations, and a full social layer — all wrapped in a clean, native SwiftUI interface.
+
+<br>
+
+## Features at a Glance
+
+<table>
+<tr>
+<td width="50%">
 
 ### Rounds & Scoring
-- Full 9/18-hole scorecard entry with stroke-by-stroke tracking
-- Detailed hole input: putts, fairway hit, penalties, wind conditions, notes
-- Real-time score-to-par calculations with color-coded feedback
-- Animated score counters with haptic feedback
-- Round summary with comprehensive stats
-- CSV/JSON export for data backup
+- Full 9/18-hole scorecard with stroke-by-stroke tracking
+- Detailed hole input — putts, fairway hit, penalties, wind, notes
+- Real-time score-to-par with color-coded feedback
+- Animated counters with haptic & sound feedback
+- Undo/redo support for score corrections
+- CSV & JSON export for data backup
+
+</td>
+<td width="50%">
 
 ### Handicap System
-- **World Handicap System (WHS)** compliant calculations
-- Score differential, adjusted gross score, course handicap
-- Handicap trend analysis (improving / stable / worsening)
-- Interactive handicap evolution chart (Swift Charts)
-- Historical handicap records
+- **World Handicap System (WHS)** compliant engine
+- Score differential & adjusted gross score
+- Course handicap per tee/slope
+- Trend analysis — improving, stable, or worsening
+- Interactive evolution chart (Swift Charts)
+- Full handicap history with per-round records
+
+</td>
+</tr>
+<tr>
+<td width="50%">
 
 ### Course Discovery
-- **Google Places API** integration — find golf courses within 50km
-- Interactive MapKit map with custom course pins
-- Course details: rating, price level, open/closed status, distance
-- 24-hour smart caching via SwiftData
-- Direct navigation to Apple Maps / Google Maps
+- **Google Places API (v1)** — find courses within 50km
+- Interactive MapKit map with custom pins
+- Rating, price level, open/closed, distance
+- 24h smart cache via SwiftData
+- One-tap directions (Apple Maps / Google Maps)
+- Weather conditions via WeatherKit
+
+</td>
+<td width="50%">
 
 ### Social & Multiplayer
-- Friends system with search, add, accept/reject requests
-- Game session scheduling with date, course, and price
+- Friend system — search, add, accept/reject
+- Game session scheduling (date, course, price)
 - Invite friends to upcoming rounds
-- Share round results and game invites
+- Share results & invites via share sheet
 - Real-time participant status tracking
+- Push notification reminders
 
-### Profile & Stats
-- Handicap display with trend indicators
-- Best score, rounds played, average stats
-- Score distribution chart (eagles, birdies, pars, bogeys)
-- On-device analytics (most played course, rounds this month)
-- App Store review prompt after milestone rounds
+</td>
+</tr>
+</table>
 
----
+<br>
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **UI** | SwiftUI 5 + Swift Charts |
-| **Data** | SwiftData (offline-first) |
-| **Backend** | Supabase (Auth, PostgreSQL, Realtime) |
-| **Auth** | Apple Sign-In + Google OAuth (PKCE) |
-| **Maps** | MapKit + Google Places API (v1) |
-| **Weather** | WeatherKit |
-| **Location** | CoreLocation |
-| **Networking** | URLSession (optimized, pooled) |
+```
+┌─────────────────────────────────────────────────────────┐
+│  UI          SwiftUI 5 · Swift Charts · MapKit          │
+│  Data        SwiftData (offline-first, cascading)       │
+│  Backend     Supabase (Auth · PostgreSQL · Realtime)    │
+│  Auth        Apple Sign-In · Google OAuth (PKCE)        │
+│  APIs        Google Places v1 · WeatherKit              │
+│  Location    CoreLocation (distance-filtered)           │
+│  Network     URLSession (pooled, cached, deduplicated)  │
+│  Audio       AVFoundation (ambient, non-interrupting)   │
+└──────────────────────────────────────────────���──────────┘
+```
 
----
+<br>
 
-## Architecture
+## Project Structure
 
 ```
 TeeUp/
-├── TeeUpApp.swift              # Entry point + OAuth handler
-├── Theme/                      # AppTheme (colors, styling)
-├── Models/                     # SwiftData models
-│   ├── Course.swift            # Course → Tee → HoleData
-│   ├── Round.swift             # Round → HoleScore
-│   ├── UserProfile.swift       # Profile + HandicapRecord
-│   └── Enums.swift             # CourseRegion, TeeColor, Wind, etc.
-├── Services/                   # Business logic
-│   ├── SupabaseManager.swift   # Auth + remote sync
-│   ├── GooglePlacesService.swift # Course discovery + cache
-│   ├── LocationManager.swift   # GPS + permissions
-│   ├── FriendsService.swift    # Friend management
-│   ├── GameSessionService.swift # Social sessions
-│   └── Haptics.swift           # Haptic feedback
-├── ViewModels/
-│   ├── RoundsViewModel.swift   # Round CRUD + completion
-│   └── HandicapCalculator.swift # WHS calculations
+│
+├── TeeUpApp.swift                  # Entry point + OAuth callback
+├── Theme/AppTheme.swift            # Colors, styling, card modifiers
+│
+├── Models/                         # SwiftData models (5 entities)
+│   ├── Course.swift                #   Course → Tee → HoleData
+│   ├── Round.swift                 #   Round → HoleScore
+│   ├── UserProfile.swift           #   Profile → HandicapRecord
+│   └── Enums.swift                 #   Region, TeeColor, Wind, Units
+��
+├── Services/                       # Core business logic
+│   ├── SupabaseManager.swift       #   Auth + profile sync
+│   ├── GooglePlacesService.swift   #   Course discovery + 24h cache
+│   ├── LocationManager.swift       #   GPS + permission flow
+│   ├���─ FriendsService.swift        #   Friend CRUD (Supabase)
+│   ├── GameSessionService.swift    #   Social game sessions
+│   └── Haptics.swift               #   Score-aware haptic engine
+│
+├��─ ViewModels/
+│   ├── RoundsViewModel.swift       #   Round lifecycle + stats
+│   └── HandicapCalculator.swift    #   WHS algorithm (USGA-based)
+│
 ├── Views/
-│   ├── ContentView.swift       # Tab navigation + auth flow
-│   ├── Auth/                   # Login (Apple/Google)
-│   ├── Rounds/                 # Scorecard, hole input, summary
-│   ├── Courses/                # Course list + detail
-│   ├── Map/                    # Interactive map view
-│   ├── Friends/                # Friends list + search
-│   ├── Social/                 # Game sessions
-│   ├── Profile/                # User profile + stats
-│   └── Components/             # 18 reusable UI components
-├── Extensions/                 # Date, String, View, Double, Collection
-└── Utilities/                  # 15 utility modules
-    ├── NetworkMonitor.swift    # Connectivity detection
-    ├── Debouncer.swift         # Rate limiting (actor-based)
-    ├── CacheManager.swift      # NSCache + async image loader
-    ├── WeatherHelper.swift     # WeatherKit integration
-    ├── ExportManager.swift     # CSV/JSON export
-    ├── ShareManager.swift      # Share sheets
-    ├── HandicapTrend.swift     # Trend analysis
-    ├── QuickStats.swift        # O(n) stats calculation
-    ├── PerformanceConfig.swift # URLSession pooling, batching, etc.
-    └── ...
+│   ├── ContentView.swift           #   5-tab navigation + auth gate
+│   ├── Auth/LoginView.swift        #   Apple + Google sign-in
+│   ├─�� Rounds/                     #   Scorecard, hole input, summary (5)
+│   ├── Courses/CoursesView.swift   #   Course list + search
+│   ├── Map/MapTabView.swift        #   Map with custom pins + cards
+│   ├── Friends/FriendsView.swift   #   Friends + search + requests
+│   ��── Social/                     #   Game sessions (3)
+│   ���── Profile/ProfileView.swift   #   Stats + settings
+│   └── Components/                 #   18 reusable components
+│       ├── ToastView.swift         #     Notification toasts
+│       ├── AnimatedCounter.swift   #     Score +/- with par colors
+│       ├── HandicapChart.swift     #     Evolution line chart
+│       ├── ScoreDistribution.swift #     Bar chart by score type
+│       ├── ProgressRing.swift      #     Circular score indicator
+│       ├── GradientButton.swift    #     Primary/secondary CTAs
+│       ├── OfflineBanner.swift     #     Auto connectivity alert
+│       ├── SearchBarView.swift     #     Focused search input
+│       └── ...                     #     +10 more components
+│
+├── Extensions/                     # 5 extension files
+│   ├─�� Date+Extensions.swift       #   Cached PT formatters, smart display
+│   ├── String+Extensions.swift     #   Validation, initials, truncation
+│   ├── View+Extensions.swift       #   Shimmer, shake, glow, bounce, keyboard
+│   ├── Double+Extensions.swift     #   Distance, score, currency formatting
+│   └── Collection+Extensions.swift #   Safe subscript, chunked, upsert
+│
+└── Utilities/                      # 15 utility modules
+    ├── NetworkMonitor.swift        #   NWPathMonitor connectivity
+    ├── Debouncer.swift             #   Actor-based debounce + throttle
+    ��── CacheManager.swift          #   NSCache images + async loader
+    ├── PerformanceConfig.swift     #   URLSession pool, batching, downsample
+    ���── WeatherHelper.swift         #   WeatherKit current conditions
+    ├── ExportManager.swift         #   CSV/JSON round export
+    ├── ShareManager.swift          #   Round/course/invite share sheets
+    ├── HandicapTrend.swift         #   Trend direction analysis
+    ├── QuickStats.swift            #   Single-pass O(n) stat engine
+    ├── NotificationHelper.swift    #   Local push reminders
+    ├── AnalyticsTracker.swift      #   On-device event tracking
+    ├── FeedbackManager.swift       #   App Store review prompts
+    ├── AccessibilityHelper.swift   #   VoiceOver + Dynamic Type
+    ├── OpenURLHelper.swift         #   Maps, phone, web, settings
+    └── UndoHelper.swift            #   Generic undo/redo stack
 ```
 
----
+<br>
 
-## Performance Optimizations
+## Performance
 
-- **Cached DateFormatters** — static formatters avoid repeated allocations
-- **Request deduplication** — in-flight API requests are cancelled and replaced
-- **Optimized URLSession** — connection pooling, 50MB disk cache, 15s timeout
-- **Image downsampling** — CGImageSource thumbnails to reduce memory usage
-- **NSCache with memory warning** — auto-clears on `didReceiveMemoryWarningNotification`
-- **Batch SwiftData processing** — yields to main thread between chunks
-- **Compiled predicates** — pre-built `#Predicate` for frequent queries
-- **Location distance filter** — only updates on 100m+ movement
-- **Debounced search** — 300ms actor-based debouncer prevents rapid API calls
-- **Lazy navigation destinations** — deferred view creation for list performance
-- **Reduced motion support** — respects `UIAccessibility.isReduceMotionEnabled`
-- **Deferred startup** — background initialization of formatters, network, audio
+TeeUp is built with performance in mind from day one:
 
----
+| Optimization | Impact |
+|:---|:---|
+| **Static DateFormatters** | Avoid repeated allocations on every cell render |
+| **Request deduplication** | Cancel stale API calls, only latest request completes |
+| **URLSession pooling** | 4 connections/host, 50MB disk cache, 15s timeout |
+| **Image downsampling** | CGImageSource thumbnails — 70% less memory |
+| **NSCache + memory warning** | Auto-clears images on `didReceiveMemoryWarning` |
+| **Batch SwiftData writes** | Yields to main thread between 50-item chunks |
+| **Compiled `#Predicate`** | Pre-built predicates for hot-path queries |
+| **Location distance filter** | Only fires on 100m+ movement |
+| **Actor-based debouncer** | 300ms search debounce, no race conditions |
+| **Lazy navigation** | Deferred destination creation for large lists |
+| **Deferred startup** | Formatters, network, audio init on background queue |
+| **Reduced motion** | Respects `UIAccessibility.isReduceMotionEnabled` |
 
-## Setup
+<br>
 
-1. Clone the repo
-2. Open `TeeUp.xcodeproj` in Xcode 15+
-3. Set your **Google Places API key** in `GooglePlacesService.swift`
-4. Configure **Supabase** credentials in `SupabaseManager.swift`
-5. Add **WeatherKit** capability in Signing & Capabilities
-6. Build and run on iOS 17+ device or simulator
+## Getting Started
 
----
+```bash
+# 1. Clone
+git clone https://github.com/SoldergG/TeeUp.git
+cd TeeUp
+
+# 2. Open in Xcode
+open TeeUp.xcodeproj
+```
+
+Then:
+
+1. Set your **Google Places API key** in `Services/GooglePlacesService.swift`
+2. Configure **Supabase** URL & anon key in `Services/SupabaseManager.swift`
+3. Enable **WeatherKit** in Signing & Capabilities
+4. Select an iOS 17+ device or simulator
+5. Build & Run
+
+<br>
 
 ## Requirements
 
-- iOS 17.0+
-- Xcode 15.0+
-- Swift 5.9+
-- Google Places API key
-- Supabase project (auth + database)
+| Requirement | Version |
+|:---|:---|
+| iOS | 17.0+ |
+| Xcode | 15.0+ |
+| Swift | 5.9+ |
+| Google Places API | v1 (New) |
+| Supabase | Any |
+
+<br>
+
+## Codebase Stats
+
+```
+ 72 Swift files
+ ~4,500 lines of code
+ 5 SwiftData entities
+ 6 services
+ 18 reusable components
+ 15 utility modules
+ 5 extension files
+ 12 performance optimizations
+```
+
+<br>
 
 ---
 
-## License
+<div align="center">
 
-This project is proprietary software. All rights reserved.
+**Built with SwiftUI** · Made in Portugal
 
----
-
-<p align="center">
-  Built with SwiftUI
-</p>
+</div>
